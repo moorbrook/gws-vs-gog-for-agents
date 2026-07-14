@@ -290,10 +290,10 @@
     <div class="hero-inner">
       <p class="eyebrow">Field notes on agent infrastructure</p>
       <h1>The fastest Google Workspace CLI wasn't the one my agents preferred.</h1>
-      <p class="deck">A brittle Gmail connector sent me looking for something long-running agents could discover, recover, and use across multiple work identities without restarting.</p>
+      <p class="deck">A brittle Gmail connector sent me looking for something long-running agents could discover, recover, and use across multiple Google identities without restarting.</p>
       <div class="byline">
         <span>Published July 2026</span>
-        <span>12-minute read</span>
+        <span>6-minute read</span>
         <span>Apple Silicon benchmark</span>
       </div>
     </div>
@@ -301,24 +301,24 @@
 
   <main>
     <article>
-      <p class="lede">I have more than one job, which means I also have more than one Google Workspace account. Let's call the companies UmbrellaCorp and Weyland. I wanted long-running coding agents to work with both mailboxes without confusing identities, leaking credentials across employers, or depending on a Gmail connector that could disappear from service after a small configuration or authentication problem.</p>
+      <p class="lede">I needed an agent to access two different Gmail accounts. For most people, that means one work account and one personal account. Here I call them UmbrellaCorp and Weyland. The goal was simple: work with both mailboxes without confusing identities or depending on a Gmail connector that could disappear after a small authentication or configuration problem.</p>
 
-      <p>That last constraint matters more now than it did a year ago. An agent may run for hours or days. Restarting it because a static integration failed—or because a new tool was added—is not a serious production workflow. A normal CLI is refreshingly boring: it can be installed, authenticated, upgraded, inspected, and invoked at any point in the agent's lifetime.</p>
+      <p>An agent may now run for hours or days. Restarting it because a static integration failed—or because a new tool was added—throws away momentum and context. A normal CLI is refreshingly boring: it can be installed, authenticated, inspected, and invoked at any point in the agent's lifetime.</p>
 
-      <div class="callout">The initial plan was one CLI per company. The benchmark changed the architecture.</div>
+      <div class="callout">The initial plan was one CLI per account. The benchmark changed the architecture.</div>
 
       <section>
         <h2>The connector lifecycle no longer fits the agent lifecycle</h2>
-        <p>My starting point was the Gmail MCP or built-in Gmail connector. When it worked, it was convenient. The problem was operational fragility: an authentication issue, configuration mismatch, or connector failure could knock mail access out for the rest of an agent run.</p>
+        <p>My starting point was the Gmail MCP or built-in connector. When it worked, it was convenient. The problem was fragility: an authentication issue or connector failure could knock mail access out for the rest of an agent run.</p>
 
-        <p>In the coding-agent environments I tested, MCP configuration and tool definitions were loaded when the agent started. Adding a server, changing its configuration, or recovering from certain failures meant restarting the agent so it could rebuild its tool inventory. That assumption was tolerable when sessions lasted a few minutes. It makes much less sense when an agent may accumulate context and work continuously for hours or days.</p>
+        <p>In the coding-agent environments I tested, MCP configuration and tool definitions were loaded at startup. Adding a server, changing its configuration, or recovering from certain failures meant restarting the agent. That assumption made sense for short sessions; it does not fit agents that work continuously for hours or days.</p>
 
-        <p>Multiple accounts made the mismatch worse. A generic “Gmail” tool does not necessarily make the active identity obvious at every call. With two employers, silent account selection is not a convenience problem—it is a boundary problem. I wanted the identity in the command itself:</p>
+        <p>Multiple accounts made the mismatch worse. A generic “Gmail” tool does not always make the active identity obvious. I wanted the identity in every command:</p>
 
         <pre><code>gog --account umbrella gmail search 'has:attachment'
 gog --account weyland  gmail search 'has:attachment'</code></pre>
 
-        <p>A CLI has an independent lifecycle. It can be installed after the agent starts, authenticated without rebuilding the session, inspected with <code>--help</code> or a schema command, retried after failure, and selected explicitly per invocation. The agent keeps its context while the integration is repaired underneath it.</p>
+        <p>A CLI has an independent lifecycle. It can be installed after the agent starts, authenticated without rebuilding the session, retried after failure, and selected explicitly per invocation. The agent keeps its context while the integration is repaired underneath it.</p>
       </section>
 
       <section>
@@ -338,14 +338,7 @@ gog --account weyland  gmail search 'has:attachment'</code></pre>
           </div>
         </div>
 
-        <p>The API-shaped design makes <code>gws</code> wonderfully systematic:</p>
-        <pre><code>gws gmail users messages attachments get \
-  --params '{"userId":"me","messageId":"…","id":"…"}' \
-  --output invoice.pdf</code></pre>
-
-        <p>The task-shaped design makes the equivalent intent shorter in <code>gog</code>:</p>
-        <pre><code>gog --account umbrella gmail attachment \
-  &lt;message-id&gt; &lt;attachment-id&gt; --out invoice.pdf</code></pre>
+        <p><code>gws</code> exposes systematic API paths such as <code>gmail users messages attachments get</code>. <code>gog</code> expresses the same intent as <code>gmail attachment</code>. The first is excellent when you think in Google API resources; the second asks less of an autonomous agent.</p>
       </section>
 
       <section>
@@ -375,17 +368,7 @@ gog --account weyland  gmail search 'has:attachment'</code></pre>
           </div>
         </div>
 
-        <table>
-          <thead><tr><th>Test</th><th>gws</th><th>gog</th><th>Result</th></tr></thead>
-          <tbody>
-            <tr><td>CLI startup</td><td>3.4 ms</td><td>33.4 ms</td><td><strong>gws 9.9× faster</strong></td></tr>
-            <tr><td>Gmail API call</td><td>402 ms</td><td>417 ms</td><td>Effectively tied</td></tr>
-            <tr><td>Peak startup memory</td><td>8.9 MB</td><td>43.3 MB</td><td><strong>gws ~4.9× lighter</strong></td></tr>
-            <tr><td>Binary size</td><td>15 MB</td><td>37 MB</td><td><strong>gws smaller</strong></td></tr>
-          </tbody>
-        </table>
-
-        <p><code>gws</code> absolutely won the systems benchmark. It started almost ten times faster and used a fraction of the memory. Then the network got involved. A real Gmail operation took roughly four-tenths of a second with either tool; the 15 ms difference was small enough to disappear into ordinary internet variation.</p>
+        <p><code>gws</code> won the systems benchmark: almost ten times faster to start, about one-fifth the startup memory, and a smaller binary. Then the network got involved. A real Gmail operation took roughly four-tenths of a second with either tool; the 15 ms difference was small enough to disappear into ordinary internet variation.</p>
 
         <div class="callout">Rust won the stopwatch. It did not win the workflow.</div>
       </section>
@@ -406,21 +389,12 @@ gog --account weyland  gmail search 'has:attachment'</code></pre>
           </tbody>
         </table>
 
-        <p>The decisive flags were not performance flags:</p>
-        <pre><code>--readonly
---gmail-no-send
---enable-commands / --disable-commands
---dry-run
---no-input
---wrap-untrusted
---results-only / --select</code></pre>
-
-        <p>Those controls let an operator constrain an agent before it touches a mailbox. They also reduce the amount of policy that must live in a prompt. That is a much bigger operational win than saving 30 milliseconds when a process starts.</p>
+        <p>The decisive features were not performance features. <code>gog</code> offers read-only and no-send modes, command allowlists and denylists, dry runs, non-interactive operation, untrusted-content wrapping, and output selection. Those controls constrain an agent before it touches a mailbox and reduce the policy that must live in a prompt. That is a bigger operational win than saving 30 milliseconds at process startup.</p>
       </section>
 
       <section>
-        <h2>One CLI, two companies, no identity confusion</h2>
-        <p>The final setup used <code>gog</code> for both fictional employers, while keeping credentials and browser sessions separate.</p>
+        <h2>One CLI, two accounts, no identity confusion</h2>
+        <p>The final setup used <code>gog</code> for both accounts while keeping their credentials and browser sessions separate.</p>
 
         <div class="architecture" aria-label="Two isolated Google Workspace identities connected to gog">
           <div class="identity">
@@ -434,54 +408,15 @@ gog --account weyland  gmail search 'has:attachment'</code></pre>
           </div>
         </div>
 
-        <p>Each company gets its own Google Cloud project and Desktop OAuth client. The client secret goes into the macOS Keychain, not a shell profile. A domain mapping tells <code>gog</code> which OAuth client belongs to which account:</p>
+        <p>At a high level, each identity gets its own Google Cloud OAuth client, stored credentials, domain mapping, and short account alias. OAuth is completed in a matching Firefox container so existing Google cookies cannot silently select the wrong account. Secrets and refresh tokens live in the macOS Keychain. Finally, a harmless Gmail profile call verifies that each alias resolves to the intended mailbox.</p>
 
-        <pre><code><span class="comment"># Import each company's Desktop OAuth JSON under a distinct client.</span>
-gog --client umbrella auth credentials set umbrella-client.json \
-  --domain umbrellacorp.example
-
-gog --client weyland auth credentials set weyland-client.json \
-  --domain weyland.example
-
-<span class="comment"># Authorize each account. Use its matching Firefox container.</span>
-gog --client umbrella auth add operator@umbrellacorp.example \
-  --services gmail --gmail-scope full --manual
-
-gog --client weyland auth add operator@weyland.example \
-  --services gmail --gmail-scope full --manual
-
-<span class="comment"># Give agents short, unambiguous selectors.</span>
-gog auth alias set umbrella operator@umbrellacorp.example
-gog auth alias set weyland operator@weyland.example</code></pre>
-
-        <h3>The Firefox container rule</h3>
-        <p>Before opening an OAuth URL, verify the tab's container badge—not just the avatar on the Google page. UmbrellaCorp authorization happens only in an UmbrellaCorp container tab; Weyland authorization happens only in a Weyland tab. This prevents Google's account chooser and existing cookies from silently selecting the wrong employer.</p>
-
-        <p>With <code>--manual</code>, Google eventually redirects to a temporary <code>127.0.0.1</code> address. Firefox may show “Unable to connect.” That is expected: copy the complete redirect URL from the address bar and paste it back into the waiting CLI. The authorization code is in the URL.</p>
-
-        <h3>Verify before handing it to an agent</h3>
-        <pre><code>gog auth doctor --check --no-input
-
-gog --account umbrella api call gmail v1 users.getProfile \
-  --params '{"userId":"me"}' --json --results-only
-
-gog --account weyland api call gmail v1 users.getProfile \
-  --params '{"userId":"me"}' --json --results-only</code></pre>
-
-        <p>The profile check is important. Successful OAuth is not enough; the final verification should prove that each alias resolves to the intended mailbox and OAuth client.</p>
-      </section>
-
-      <section>
-        <h2>Why this beats a static connector for long-running agents</h2>
-        <p>A CLI is not automatically safer or better than every connector. The advantage here is lifecycle independence. The agent can discover the tool after startup, invoke it as a subprocess, inspect its schema, and recover from ordinary failures without reinitializing its entire tool environment.</p>
-
-        <p>It is also easier to test. We can benchmark the binary, run an authentication doctor, constrain commands, validate an alias against a profile endpoint, and capture stable exit codes. Those are conventional operational primitives, and conventional primitives age well.</p>
+        <p>You do not need to assemble this by hand. Codex can install the CLI, create and configure the Google Cloud projects, guide each OAuth flow in the correct browser container, register the aliases, and verify both accounts for real. The human only needs to approve Google's consent screens and any security-sensitive steps.</p>
       </section>
 
       <section class="verdict">
         <h2>The practical verdict</h2>
         <p>Choose <code>gws</code> when process overhead, low memory, and a direct mapping to Workspace APIs dominate. Choose <code>gog</code> when autonomous agents will perform everyday work across multiple accounts and you want compact commands plus enforceable guardrails.</p>
-        <p>For this setup, the benchmark overturned the original assumption. The smaller, faster binary was technically impressive. The heavier CLI was the better agent tool. So both fictional companies moved to <code>gog</code>, with explicit aliases, separate OAuth clients, separate browser containers, and the old CLI retained only as a rollback path.</p>
+        <p>For this setup, the benchmark overturned the original assumption. The smaller, faster binary was technically impressive. The heavier CLI was the better agent tool. So both fictional accounts moved to <code>gog</code>, with explicit aliases, separate OAuth clients, separate browser containers, and the old CLI retained only as a rollback path.</p>
       </section>
 
       <p style="margin-top: 42px; color: var(--muted); font: italic 16px/1.6 var(--serif);">Process note: This article was written by GPT-5.6 Sol at the end of the exact benchmarking process described above. I hope people and agents will find it useful.</p>
