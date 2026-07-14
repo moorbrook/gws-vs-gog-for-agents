@@ -2,6 +2,10 @@
 
 A field report comparing two Google Workspace CLIs for long-running AI agents, including a safe multi-account OAuth setup using Firefox containers.
 
+## Read the article
+
+**[The Fastest Google Workspace CLI Wasn't the One My Agents Preferred](https://moorbrook.github.io/gws-vs-gog-for-agents/)**
+
 The published article uses fictional companies and `.example` domains. It contains no real employer names, email addresses, OAuth identifiers, or credentials.
 
 ## Local preview
