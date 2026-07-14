@@ -154,10 +154,36 @@
     }
 
     .tool-card {
+      display: block;
       padding: 28px;
       border: 1px solid var(--line);
       border-radius: 16px;
+      color: inherit;
       background: var(--card);
+      text-decoration: none;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-3px);
+      border-color: #8eaf9d;
+      color: inherit;
+      box-shadow: 0 16px 32px rgba(23, 32, 28, .1);
+    }
+
+    .tool-card:focus-visible {
+      outline: 3px solid var(--orange);
+      outline-offset: 4px;
+    }
+
+    .tool-card::after {
+      content: "View project ↗";
+      display: block;
+      margin-top: 22px;
+      color: var(--green);
+      font: 750 12px/1 var(--sans);
+      letter-spacing: .06em;
+      text-transform: uppercase;
     }
 
     .tool-card .tag {
@@ -326,16 +352,16 @@ gog --account weyland  gmail search 'has:attachment'</code></pre>
         <p>I tested <a href="https://github.com/googleworkspace/cli">gws</a> and <a href="https://github.com/openclaw/gogcli">gog</a>. Both speak to Google Workspace APIs and both produce structured output, but they expose very different interfaces.</p>
 
         <div class="tools">
-          <div class="tool-card">
+          <a class="tool-card" href="https://github.com/googleworkspace/cli" aria-label="View the gws project on GitHub">
             <span class="tag">API-shaped</span>
             <h3>gws</h3>
             <p>A compact Rust binary whose commands closely mirror Google's resource and method hierarchy. It is fast, direct, and predictable if you already think in Google API paths.</p>
-          </div>
-          <div class="tool-card">
+          </a>
+          <a class="tool-card" href="https://github.com/openclaw/gogcli" aria-label="View the gog project on GitHub">
             <span class="tag">Task-shaped</span>
             <h3>gog</h3>
             <p>A broader Go CLI with human-scale verbs, native account aliases, machine-readable schemas, and unusually thoughtful safety controls for automation.</p>
-          </div>
+          </a>
         </div>
 
         <p><code>gws</code> exposes systematic API paths such as <code>gmail users messages attachments get</code>. <code>gog</code> expresses the same intent as <code>gmail attachment</code>. The first is excellent when you think in Google API resources; the second asks less of an autonomous agent.</p>
